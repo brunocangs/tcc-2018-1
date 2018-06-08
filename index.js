@@ -1,11 +1,29 @@
-const mysql = require('mysql');
+process._debugProcess(process.pid);
+import mysql from 'mysql';
+import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 
-let connection = mysql.createConnection({
-    host: 'us-cdbr-iron-east-04.cleardb.net',
-    user: 'b2aa8094cb4211',
-    password: 'bdd6ef70',
-    database: 'heroku_3ed39ac37ea8258',
-    port: 3306
-});
+dotenv.config();
 
-connection.connect(console.log);
+try {
+    const connection = mysql.createConnection({
+        host: process.env.SQLHOST,
+        user: process.env.SQLUSER,
+        password: process.env.SQLPASSWORD,
+        port: process.env.SQLPORT,
+        database: process.env.SQLDATABASE
+    });
+    
+    connection.connect(console.log);
+    
+    mongoose.connect(process.env.MONGOURL);
+    const db = mongoose.connection;
+    db.on('error', console.error.bind(console, 'connection error:'));
+    db.once('open', function() {
+        console.log('Mongo Connected');
+    });
+}catch(e) {
+    console.warn(e);
+}
+
+require('./src');

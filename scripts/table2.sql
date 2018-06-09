@@ -1,0 +1,4 @@
+create table if not exists table2(
+	id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+	createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+)

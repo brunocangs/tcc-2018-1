@@ -2,7 +2,7 @@ process._debugProcess(process.pid);
 import mysql from 'mysql';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
-
+import * as scripts from './scripts';
 dotenv.config();
 
 try {
@@ -15,7 +15,9 @@ try {
     });
     
     connection.connect(console.log);
-    
+    Object.keys(scripts).forEach(script => {
+        connection.query(scripts[script], console.log);
+    });
     mongoose.connect(process.env.MONGOURL);
     const db = mongoose.connection;
     db.on('error', console.error.bind(console, 'connection error:'));

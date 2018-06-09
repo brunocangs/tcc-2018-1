@@ -10,7 +10,11 @@ const Table1Schema = new mongoose.Schema({
 });
 
 Table1Schema.plugin(explain, {
-    callback: console.log
+    callback: (stats) => {
+        stats.forEach(stat => {
+            console.log(stat.executionStats.executionTimeMillis);
+        });
+    }
 });
 
 const model = mongoose.model('table1', Table1Schema);

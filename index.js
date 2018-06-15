@@ -1,4 +1,4 @@
-process._debugProcess(process.pid);
+// process._debugProcess(process.pid);
 process.on('uncaughtException', (except) => {
     console.warn(except);
 });

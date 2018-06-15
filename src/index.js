@@ -6,7 +6,7 @@ import {mysql} from './connections';
 const runTests = async function () {
     let results = [];
     let p = Promise.resolve();
-    const array = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000];
+    const array = [5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70000];
     array.forEach(key => {
         p = p.then(async () => {
             let res = {};
@@ -37,7 +37,7 @@ const runTests = async function () {
             res.testName = 'Insere Multiplos';
             res.time = await time(() => {
                 return new Promise((resolve, reject) => {
-                    mysql.query(...scripts.insertMultiple('table1', key),(...args) => {
+                    mysql.query(...scripts.insertMultiple('table1', key), (...args) => {
                         resolve(args);
                     });
                 })
@@ -46,7 +46,7 @@ const runTests = async function () {
 
             res.testName = 'Busca um';
             random = await new Promise((resolve) => {
-                mysql.query(scripts.select('*', 'table1'),(...args) => {
+                mysql.query(scripts.select('*', 'table1'), (...args) => {
                     resolve(args);
                 })
             });
@@ -55,7 +55,7 @@ const runTests = async function () {
             random = random[randIndex];
             res.time = await time(() => {
                 return new Promise((resolve, reject) => {
-                    mysql.query(scripts.select('*', 'table1', {id: random.id}),(...args) => {
+                    mysql.query(scripts.select('*', 'table1', {id: random.id}), (...args) => {
                         resolve(args);
                     });
                 })

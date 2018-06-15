@@ -1,6 +1,4 @@
 import mongoose from 'mongoose';
-import explain from 'mongoose-explain';
-mongoose.set('debug', console.log);
 const Table1Schema = new mongoose.Schema({
     createdAt: {
         type: Date,

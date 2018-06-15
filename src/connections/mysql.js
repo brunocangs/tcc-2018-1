@@ -15,7 +15,13 @@ try {
     });
     // Create Tables
     Object.keys(scripts).forEach(script => {
-        connection.query(scripts[script], console.log);
+        connection.query(scripts[script], (err) => {
+            if(!err) {
+                console.log('Checked',script,'successfully');
+            } else {
+                console.warn(err);
+            }
+        });
     });
     
 }catch(e) {

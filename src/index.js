@@ -1,7 +1,9 @@
-import {Table1, Table1toN, Table2} from './schemas';
+import {Table1, Table1toN, Table2, Indexed} from './schemas';
 import scripts, {sqlScripts} from '../scripts';
 import {time, write} from './helpers';
 import {mysql} from './connections';
+import tableIndexed from './schemas/tableIndexed';
+import faker from 'faker';
 
 const runTests = async function () {
     let results = [];
@@ -32,6 +34,19 @@ const runTests = async function () {
                 return Table1.deleteMany({});
             })
             results.push({...res});
+
+            res.testName = 'Insere Indexado';
+            let inserts = [];
+            for(let i = 0; i < key; i++) {
+                inserts.push({
+                    name: faker.name.firstName()
+                });
+            }
+            res.time = await time(() => {
+                return Indexed.insertMany(inserts);
+            })
+            results.push({...res});
+
 
             res.database = 'MySQL';
             res.testName = 'Insere Multiplos';
@@ -72,7 +87,22 @@ const runTests = async function () {
             })
             results.push({...res});
 
+            res.testName = 'Insere Indexado';
+            inserts = Object.keys([...new Array(key)]).map(item => {
+                return faker.name.firstName();
+            });
+            res.time = await time(() => {
+                return new Promise((res) => {
+                    mysql.query(...scripts.insertMultiple('table_indexed', null, ['name'], inserts),(...args) => {
+                        res(args);
+                    });
+                })
+            })
+            results.push({...res});
+
             mysql.query('ALTER TABLE table1 AUTO_INCREMENT = 1');
+
+
             if (key === array[array.length - 1]) {
                 write('results.csv', results, ['database', 'testName', 'quantity', 'time']);
             }

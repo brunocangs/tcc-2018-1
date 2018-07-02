@@ -6,7 +6,7 @@ export default function insertMultiple (tableName, quantity, fields, values) {
     }
     let insert = `insert into ${tableName}`;
     if(fields) {
-        insert += ' ? ';
+        insert += '(' + fields.join(', ') + ')';
     }
-    return [[insert, ' values ?'].join(''), fields ? [fields, values] : [values]];
+    return [[insert, ' values ?'].join(''), [values]];
 }

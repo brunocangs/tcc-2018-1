@@ -1,8 +1,7 @@
-import {Table1, Table1toN, Table2, Indexed} from './schemas';
+import {Table1, Table1toN, Table2} from './schemas';
 import scripts, {sqlScripts} from '../scripts';
 import {time, write} from './helpers';
 import {mysql} from './connections';
-import tableIndexed from './schemas/tableIndexed';
 import faker from 'faker';
 
 const runTests = async function () {
@@ -23,30 +22,52 @@ const runTests = async function () {
             res.testName = 'Busca um';
             let random = await Table1.find({});
             let randIndex = Math.floor(Math.random() * random.length);
-            random = random[randIndex];
+            randIndex = random[randIndex];
             res.time = await time(() => {
-                return Table1.findOne(random);
+                return Table1.findOne(randIndex);
             });
             results.push({...res});
+
+            res.testName = 'Join 1 - N';
+            randIndex = Math.floor(Math.random() * random.length);
+
+            await Table1toN.insertMany([...new Array(key)].map(index => {return {target: random[randIndex]._id}}));
+            res.time = await time(() => {
+                return Table1toN.aggregate([{
+                    $match: {}
+                }, {
+                    $lookup: {
+                        from: 'table1',
+                        localField: 'target',
+                        foreignField: '_id',
+                        as: 'target'
+                    }
+                }]);
+            });
+            results.push({...res});
+            console.log(await Table1toN.collection.createIndex({target: 1}));
+            res.testName = 'Join 1 - N Indexado';
+            res.time = await time(() => {
+                return Table1toN.aggregate([{
+                    $match: {}
+                }, {
+                    $lookup: {
+                        from: 'table1',
+                        localField: 'target',
+                        foreignField: '_id',
+                        as: 'target'
+                    }
+                }]);
+            });
+            results.push({...res});
+            console.log(await Table1toN.collection.dropIndexes());
+            await Table1toN.remove({});
 
             res.testName = 'Deleta todos';
             res.time = await time(() => {
                 return Table1.deleteMany({});
             })
             results.push({...res});
-
-            res.testName = 'Insere Indexado';
-            let inserts = [];
-            for(let i = 0; i < key; i++) {
-                inserts.push({
-                    name: faker.name.firstName()
-                });
-            }
-            res.time = await time(() => {
-                return Indexed.insertMany(inserts);
-            })
-            results.push({...res});
-
 
             res.database = 'MySQL';
             res.testName = 'Insere Multiplos';
@@ -67,15 +88,35 @@ const runTests = async function () {
             });
             random = random[1];
             randIndex = Math.floor(Math.random() * random.length);
-            random = random[randIndex];
+            randIndex = random[randIndex];
+
             res.time = await time(() => {
                 return new Promise((resolve, reject) => {
-                    mysql.query(scripts.select('*', 'table1', {id: random.id}), (...args) => {
+                    mysql.query(scripts.select('*', 'table1', {id: randIndex.id}), (...args) => {
                         resolve(args);
                     });
                 })
             });
             results.push({...res});
+
+
+            res.testName = 'Join 1 - N';
+            await new Promise((res) => {
+                const insert = [...new Array(key)].map((item, index) => {
+                    randIndex = Math.floor(Math.random() * random.length);
+                    randIndex = random[randIndex];
+                    return [randIndex.id, new Date()];
+                });
+                mysql.query(...scripts.insertMultiple('table1toN', key, ['target', 'createdAt'], insert), (...args) => res(args));
+            });
+
+            res.time = await time(() => {
+                return new Promise((res) => {
+                    mysql.query('SELECT * FROM table1toN JOIN table1 on target=id', (...args) => res(args));
+                });
+            });
+            results.push({...res});
+
 
             res.testName = 'Deleta todos';
             res.time = await time(() => {
@@ -87,24 +128,14 @@ const runTests = async function () {
             })
             results.push({...res});
 
-            res.testName = 'Insere Indexado';
-            inserts = Object.keys([...new Array(key)]).map(item => {
-                return faker.name.firstName();
-            });
-            res.time = await time(() => {
-                return new Promise((res) => {
-                    mysql.query(...scripts.insertMultiple('table_indexed', null, ['name'], inserts),(...args) => {
-                        res(args);
-                    });
-                })
+            await new Promise((res) => {
+                mysql.query('DELETE FROM table1toN', res);
             })
-            results.push({...res});
+
 
             mysql.query('ALTER TABLE table1 AUTO_INCREMENT = 1');
-
-
             if (key === array[array.length - 1]) {
-                write('results.csv', results, ['database', 'testName', 'quantity', 'time']);
+                write('results2.csv', results, ['database', 'testName', 'quantity', 'time']);
             }
             console.log(key);
         })
